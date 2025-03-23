@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "axiom-stylus-integration-addon",
+	"version": "${version}",
+	"name": "Axiom Stylus Integration Addon",
+	"description": "Add graphics tablet support to Axiom",
+	"authors": ["nahkd123"],
+	"contact": {
+		"homepage": "https://github.com/nahkd123/axiom-stylus-integration-addon",
+		"sources": "https://github.com/nahkd123/axiom-stylus-integration-addon.git"
+	},
+	"license": "MIT",
+	"icon": "assets/axiom-stylus-integration-addon/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["io.github.nahkd123.axiomstylus.AxiomStylusIntegrationAddon"]
+	},
+	"mixins": [
+		"axiom-stylus-integration-addon.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.10",
+		"minecraft": "~1.21.4",
+		"java": ">=23",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"axiom": "*"
+	}
+}

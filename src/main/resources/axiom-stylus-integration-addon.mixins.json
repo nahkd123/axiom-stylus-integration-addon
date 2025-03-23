@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "io.github.nahkd123.axiomstylus.mixin",
+	"compatibilityLevel": "JAVA_22",
+	"mixins": [
+		"GameRendererMixin",
+		"WindowMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
