@@ -10,7 +10,7 @@ import com.moulberry.axiomclientapi.service.ToolService;
 
 import imgui.ImGui;
 import imgui.flag.ImGuiSliderFlags;
-import io.github.nahkd123.axiomstylus.AxiomStylusIntegrationAddon;
+import io.github.nahkd123.axiomstylus.AxiomStylusAddon;
 import io.github.nahkd123.axiomstylus.input.InputReport;
 import io.github.nahkd123.axiomstylus.input.TabletManager;
 import net.minecraft.block.BlockState;
@@ -20,7 +20,11 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.Vec3d;
 
-// The whole thing can be extended into advanced brush system :)
+/**
+ * <p>
+ * A basic freehand drawing tool with pressure sensitivity.
+ * </p>
+ */
 public class FreehandTool implements CustomTool {
 	private float[] startRadius = { 0f };
 	private float[] endRadius = { 5f };
@@ -31,7 +35,7 @@ public class FreehandTool implements CustomTool {
 	private boolean drawing = false;
 	private Vec3d lastTipPos = null;
 	private InputReport lastInput = null;
-	private BlockRegion region = AxiomStylusIntegrationAddon.REGION.createBlock();
+	private BlockRegion region = AxiomStylusAddon.REGION.createBlock();
 
 	@Override
 	public String name() {
@@ -48,8 +52,9 @@ public class FreehandTool implements CustomTool {
 
 	@Override
 	public void render(Camera camera, float tickDelta, long time, MatrixStack poseStack, Matrix4f projection) {
-		ToolService toolService = AxiomStylusIntegrationAddon.TOOL_SERVICE;
+		ToolService toolService = AxiomStylusAddon.TOOL_SERVICE;
 		InputReport input = TabletManager.get(MinecraftClient.getInstance()).getLastReport();
+		if (input == null) return;
 		boolean penDown = input.pressure() > 0f;
 
 		if (drawing ^ penDown) {
@@ -66,7 +71,7 @@ public class FreehandTool implements CustomTool {
 
 			if (drawing) {
 				BlockState palette = toolService.getActiveBlock();
-				onTipMove(raycast.getPos(), input, spacing[0], (p, i) -> onBrushDab(p, i, palette, region));
+				onTipMove(raycast.getPos().add(-0.5), input, spacing[0], (p, i) -> onBrushDab(p, i, palette, region));
 				region.render(camera, Vec3d.ZERO, poseStack, projection, 0.5f, 1f);
 			} else {
 				// TODO brush outline

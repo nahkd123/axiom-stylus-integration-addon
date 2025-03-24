@@ -10,10 +10,11 @@ import com.moulberry.axiomclientapi.service.ToolPatherProvider;
 import com.moulberry.axiomclientapi.service.ToolRegistryService;
 import com.moulberry.axiomclientapi.service.ToolService;
 
+import io.github.nahkd123.axiomstylus.tool.PresetBrushTool;
 import io.github.nahkd123.axiomstylus.tool.FreehandTool;
 import net.fabricmc.api.ModInitializer;
 
-public class AxiomStylusIntegrationAddon implements ModInitializer {
+public class AxiomStylusAddon implements ModInitializer {
 	public static final String MOD_ID = "axiom-stylus-integration-addon";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
@@ -40,5 +41,6 @@ public class AxiomStylusIntegrationAddon implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		TOOL_REGISTRY.register(new FreehandTool());
+		TOOL_REGISTRY.register(new PresetBrushTool());
 	}
 }

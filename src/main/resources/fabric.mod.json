@@ -13,7 +13,7 @@
 	"icon": "assets/axiom-stylus-integration-addon/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": ["io.github.nahkd123.axiomstylus.AxiomStylusIntegrationAddon"]
+		"main": ["io.github.nahkd123.axiomstylus.AxiomStylusAddon"]
 	},
 	"mixins": [
 		"axiom-stylus-integration-addon.mixins.json"

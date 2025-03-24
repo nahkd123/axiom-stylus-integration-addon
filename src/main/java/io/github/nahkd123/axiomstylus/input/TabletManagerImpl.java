@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import io.github.nahkd123.axiomstylus.AxiomStylusIntegrationAddon;
+import io.github.nahkd123.axiomstylus.AxiomStylusAddon;
 
 class TabletManagerImpl implements TabletManager {
 	private Collection<TabletDriver> drivers = TabletDriver.getAllSupportedDrivers();
@@ -17,7 +17,7 @@ class TabletManagerImpl implements TabletManager {
 		this.glfwWindowHandle = glfwWindowHandle;
 
 		for (TabletDriver driver : drivers) {
-			AxiomStylusIntegrationAddon.LOGGER.info("Initializing tablet driver: {}",
+			AxiomStylusAddon.LOGGER.info("Initializing tablet driver: {}",
 				driver.getClass().getSimpleName());
 			driver.initialize(new TabletDriverContextImpl(this));
 		}

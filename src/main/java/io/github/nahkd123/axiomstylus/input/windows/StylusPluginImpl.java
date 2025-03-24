@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.nahkd123.axiomstylus.AxiomStylusIntegrationAddon;
+import io.github.nahkd123.axiomstylus.AxiomStylusAddon;
 import io.github.nahkd123.axiomstylus.input.InputReport;
 import io.github.nahkd123.axiomstylus.input.TabletDriverContext;
 import io.github.nahkd123.com4j.itf.realtimestylus.IRealTimeStylus;
@@ -44,7 +44,9 @@ class StylusPluginImpl extends IStylusAsyncPlugin {
 			RtsEvent.StylusButtonDown,
 			RtsEvent.StylusButtonUp,
 			RtsEvent.TabletAdded,
-			RtsEvent.TabletRemoved);
+			RtsEvent.TabletRemoved,
+			RtsEvent.StylusDown,
+			RtsEvent.StylusUp);
 	}
 
 	@Override
@@ -65,6 +67,16 @@ class StylusPluginImpl extends IStylusAsyncPlugin {
 			t.printStackTrace();
 			return HResult.E_FAIL;
 		}
+	}
+
+	@Override
+	public void onStylusDownPacket(IRealTimeStylus rts, StylusInfo stylus, PacketsIO io) {
+		onPacket0(rts, stylus, io);
+	}
+
+	@Override
+	public void onStylusUpPacket(IRealTimeStylus rts, StylusInfo stylus, PacketsIO io) {
+		onPacket0(rts, stylus, io);
 	}
 
 	@Override
@@ -118,7 +130,7 @@ class StylusPluginImpl extends IStylusAsyncPlugin {
 					tiltY = value;
 					break;
 				default:
-					AxiomStylusIntegrationAddon.LOGGER.warn("Unknown field type: {}", type);
+					AxiomStylusAddon.LOGGER.warn("Unknown field type: {}", type);
 					break;
 				}
 			}
