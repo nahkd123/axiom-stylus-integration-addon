@@ -31,7 +31,7 @@ public class BrushPresetEditor implements BrushPreset {
 		// @formatter:off
 		shapeDynamics.add(new BrushDynamic<>(
 			DynamicSource.NORMAL_PRESSURE,
-			new DynamicFunction.ExponentDynamicFunction(),
+			new DynamicFunction.Parametric(),
 			Matrix4fDynamicTarget.SCALE));
 		// @formatter:on
 	}
@@ -135,7 +135,7 @@ public class BrushPresetEditor implements BrushPreset {
 
 				if (add) {
 					var source = DynamicSource.NORMAL_PRESSURE;
-					var function = new DynamicFunction.ExponentDynamicFunction();
+					var function = new DynamicFunction.Parametric();
 					var target = Matrix4fDynamicTarget.SCALE;
 					shapeDynamics.add(new BrushDynamic<>(source, function, target));
 					selectedDynamic[0] = 0;

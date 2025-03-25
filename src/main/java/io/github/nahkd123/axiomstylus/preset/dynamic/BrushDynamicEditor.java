@@ -19,8 +19,8 @@ public abstract class BrushDynamicEditor<T> {
 	private ImInt sourceIndex;
 
 	@SuppressWarnings("unchecked")
-	private Supplier<DynamicFunction>[] allFunctions = new Supplier[] { DynamicFunction.ExponentDynamicFunction::new };
-	private String[] functionTypeLabels = { "Exponent curve" };
+	private Supplier<DynamicFunction>[] allFunctions = new Supplier[] { DynamicFunction.Parametric::new };
+	private String[] functionTypeLabels = { "Parametric" };
 	private ImInt functionTypeIndex;
 
 	private List<DynamicTarget<T>> allTargets = getAllTargets();
@@ -38,7 +38,7 @@ public abstract class BrushDynamicEditor<T> {
 		sourceIndex = new ImInt(source.ordinal());
 
 		functionTypeIndex = new ImInt(switch (function) {
-		case DynamicFunction.ExponentDynamicFunction _ -> 0;
+		case DynamicFunction.Parametric _ -> 0;
 		default -> throw new IllegalArgumentException("Unexpected value: " + function);
 		});
 
