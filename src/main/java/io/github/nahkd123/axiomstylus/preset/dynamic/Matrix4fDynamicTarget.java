@@ -38,13 +38,14 @@ public enum Matrix4fDynamicTarget implements DynamicTarget<Matrix4f> {
 	ROTATE_Y("Rotate Y", "Rotate along Y axis") {
 		@Override
 		public void addValue(Matrix4f target, double value) {
-			target.rotateX((float) (value * Math.PI / 180d));
+			System.out.println(value);
+			target.rotateY((float) (value * Math.PI / 180d));
 		}
 	},
 	ROTATE_Z("Rotate Z", "Rotate along Z axis") {
 		@Override
 		public void addValue(Matrix4f target, double value) {
-			target.rotateX((float) (value * Math.PI / 180d));
+			target.rotateZ((float) (value * Math.PI / 180d));
 		}
 	};
 

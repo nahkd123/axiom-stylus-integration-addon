@@ -8,6 +8,7 @@ import com.mojang.serialization.Codec;
  * </p>
  */
 public enum DynamicSource {
+	CONSTANT("Constant", "Always 1.00", 0f, 1f),
 	DISTANCE("Distance", "Total travelled distance of brush tip (blocks)", 0f, null),
 	SPEED("Speed", "Movement speed of brush tip (blocks per second)", 0f, null),
 	NORMAL_PRESSURE("Pressure", "Normal pressure of the brush", 0f, 1f),

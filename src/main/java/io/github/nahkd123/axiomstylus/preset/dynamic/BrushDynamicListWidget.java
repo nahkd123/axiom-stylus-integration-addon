@@ -55,7 +55,7 @@ public class BrushDynamicListWidget {
 					ImGui.menuItem("Duplicate", "", false, false);
 
 					if (ImGui.menuItem("Delete")) {
-						if (selected) editor = null;
+						editor = null;
 						removeLater = i;
 					}
 

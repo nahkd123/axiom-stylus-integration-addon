@@ -36,36 +36,39 @@ public interface DynamicFunction extends FloatUnaryOperator {
 			Codec.floatRange(-1f, 1f).optionalFieldOf("hShift", 0f).forGetter(Parametric::getHorizontalShift),
 			Codec.floatRange(0f, 10f).optionalFieldOf("gain", 1f).forGetter(Parametric::getGain),
 			Codec.floatRange(0f, 10f).optionalFieldOf("exponent", 1f).forGetter(Parametric::getExponent),
-			Codec.BOOL.optionalFieldOf("flip", false).forGetter(Parametric::isFlip))
+			Codec.BOOL.optionalFieldOf("flip", false).forGetter(Parametric::isFlip),
+			Codec.BOOL.optionalFieldOf("clampIn", true).forGetter(Parametric::isFlip),
+			Codec.BOOL.optionalFieldOf("clampOut", true).forGetter(Parametric::isFlip))
 			.apply(instance, Parametric::new));
 
 		private float[] vShift = { 0f, -1f };
 		private float[] hShift = { 0f, -1f };
 		private float[] gain = { 1f, -1f };
 		private float[] exponent = { 1f, -1f };
-		private boolean flip = false;
+		private boolean flip = false, clampIn = true, clampOut = true;
 		private float[] imguiPlot = new float[128];
 
-		public Parametric(float vShift, float hShift, float gain, float exponent, boolean flip) {
+		public Parametric(float vShift, float hShift, float gain, float exponent, boolean flip, boolean clampIn, boolean clampOut) {
 			this.vShift[0] = vShift;
 			this.hShift[0] = hShift;
 			this.gain[0] = gain;
 			this.exponent[0] = exponent;
 			this.flip = flip;
+			this.clampIn = clampIn;
+			this.clampOut = clampOut;
 		}
 
 		public Parametric() {
-			this(0f, 0f, 1f, 1f, false);
+			this(0f, 0f, 1f, 1f, false, true, true);
 		}
 
 		@Override
 		public float apply(float operand) {
-			float in = Math.clamp(operand - hShift[0], 0f, 1f);
-			float v = (float) Math.clamp(
-				vShift[0] + Math.pow(in, exponent[0]) * gain[0],
-				0f, 1f);
+			float in = clampIn ? Math.clamp(operand - hShift[0], 0f, 1f) : operand - hShift[0];
+			float v = (float) (vShift[0] + Math.pow(in, exponent[0]) * gain[0]);
 			if (Float.isNaN(v)) v = 0f;
-			return flip ? (1f - v) : v;
+			float output = flip ? (1f - v) : v;
+			return clampOut ? Math.clamp(output, 0f, 1f) : output;
 		}
 
 		public float getVerticalShift() { return vShift[0]; }
@@ -90,7 +93,7 @@ public interface DynamicFunction extends FloatUnaryOperator {
 
 		@Override
 		public DynamicFunction makeCopy() {
-			return new Parametric(vShift[0], hShift[0], gain[0], exponent[0], flip);
+			return new Parametric(vShift[0], hShift[0], gain[0], exponent[0], flip, clampIn, clampOut);
 		}
 
 		@Override
@@ -105,6 +108,15 @@ public interface DynamicFunction extends FloatUnaryOperator {
 				flip = !flip;
 				recalcGraph = true;
 			}
+			if (ImGui.checkbox("Clamp input", clampIn)) {
+				clampIn = !clampIn;
+				recalcGraph = true;
+			}
+			if (ImGui.checkbox("Clamp output", clampOut)) {
+				clampOut = !clampOut;
+				recalcGraph = true;
+			}
+
 			ImGui.sliderFloat("Shift X", hShift, -1f, 1f, "%.02f");
 			ImGui.sliderFloat("Shift Y", vShift, -1f, 1f, "%.02f");
 			ImGui.sliderFloat("Gain", gain, 0.01f, 10f, "%.02f", ImGuiSliderFlags.Logarithmic);
