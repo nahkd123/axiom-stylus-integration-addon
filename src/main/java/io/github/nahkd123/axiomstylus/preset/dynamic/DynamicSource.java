@@ -12,7 +12,9 @@ public enum DynamicSource {
 	SPEED("Speed", "Movement speed of brush tip (blocks per second)", 0f, null),
 	NORMAL_PRESSURE("Pressure", "Normal pressure of the brush", 0f, 1f),
 	TILT_X("Tilt X", "Brush tilt around Y axis", -90f, 90f),
-	TILT_Y("Tilt Y", "Brush tilt around X axis", -90f, 90f);
+	TILT_Y("Tilt Y", "Brush tilt around X axis", -90f, 90f),
+	JITTER_STORKE("Jitter (Stroke)", "Random value on each stroke", -1f, 1f),
+	JITTER_DAB("Jitter (Dab)", "Random value on each dab", -1f, 1f);
 
 	public static final Codec<DynamicSource> CODEC = Codec.stringResolver(
 		DynamicSource::toString,

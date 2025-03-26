@@ -31,7 +31,6 @@ import io.github.nahkd123.axiomstylus.palette.Palette;
 import io.github.nahkd123.axiomstylus.preset.BrushPresetEditor;
 import io.github.nahkd123.axiomstylus.preset.SavedBrushPreset;
 import io.github.nahkd123.axiomstylus.preset.TipShape;
-import io.github.nahkd123.axiomstylus.preset.dynamic.DynamicSource;
 import io.github.nahkd123.axiomstylus.utils.AsImGui;
 import io.github.nahkd123.axiomstylus.utils.Box3d;
 import net.minecraft.block.BlockState;
@@ -55,6 +54,7 @@ public class PresetBrushTool extends CustomStylusTool {
 	private BooleanRegion removals = AxiomStylusAddon.REGION.createBoolean();
 	private Vec3d prevTipPosition = null;
 	private InputReport prevInput = null;
+	private double jitterStroke = 0d;
 
 	public PresetBrushTool(Path presetDir) {
 		this.presetDir = presetDir;
@@ -73,6 +73,7 @@ public class PresetBrushTool extends CustomStylusTool {
 		removals.clear();
 		prevTipPosition = null;
 		prevInput = null;
+		jitterStroke = Math.random();
 	}
 
 	@Override
@@ -100,9 +101,11 @@ public class PresetBrushTool extends CustomStylusTool {
 		Matrix4f mat4 = new Matrix4f();
 		presetEditor.shapeDynamics().forEach(d -> {
 			float value = d.function().apply(switch (d.source()) {
-			case DynamicSource.NORMAL_PRESSURE -> input.pressure();
+			case NORMAL_PRESSURE -> input.pressure();
 			case TILT_X -> input.tiltX();
 			case TILT_Y -> input.tiltY();
+			case JITTER_STORKE -> (float) jitterStroke;
+			case JITTER_DAB -> (float) Math.random();
 			default -> 0f;
 			});
 			d.destination().addValue(mat4, value);

@@ -28,6 +28,24 @@ public enum Matrix4fDynamicTarget implements DynamicTarget<Matrix4f> {
 		public void addValue(Matrix4f target, double value) {
 			target.scale(1f, 1f, (float) value);
 		}
+	},
+	ROTATE_X("Rotate X", "Rotate along X axis") {
+		@Override
+		public void addValue(Matrix4f target, double value) {
+			target.rotateX((float) (value * Math.PI / 180d));
+		}
+	},
+	ROTATE_Y("Rotate Y", "Rotate along Y axis") {
+		@Override
+		public void addValue(Matrix4f target, double value) {
+			target.rotateX((float) (value * Math.PI / 180d));
+		}
+	},
+	ROTATE_Z("Rotate Z", "Rotate along Z axis") {
+		@Override
+		public void addValue(Matrix4f target, double value) {
+			target.rotateX((float) (value * Math.PI / 180d));
+		}
 	};
 
 	public static final Codec<Matrix4fDynamicTarget> CODEC = Codec.stringResolver(
