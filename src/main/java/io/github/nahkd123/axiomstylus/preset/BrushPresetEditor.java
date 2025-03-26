@@ -25,6 +25,7 @@ public class BrushPresetEditor implements BrushPreset {
 	private Palette palette = SpecialPalette.CURRENT_BLOCK;
 	private List<BrushDynamic<Matrix4f>> shapeDynamics = new ArrayList<>();
 
+	private TipShapeEditor tipShapeEditor;
 	private PaletteEditor paletteEditor;
 	private BrushDynamicListWidget dynamicList = new BrushDynamicListWidget();
 
@@ -68,6 +69,7 @@ public class BrushPresetEditor implements BrushPreset {
 	}
 
 	private void resetChildEditors() {
+		tipShapeEditor = new TipShapeEditorImpl(shape);
 		paletteEditor = new PaletteEditorImpl(palette);
 		dynamicList.reset();
 	}
@@ -75,6 +77,7 @@ public class BrushPresetEditor implements BrushPreset {
 	public void renderImGui() {
 		ImGui.pushID("Brush Tip");
 		AsImGui.separatorText("Brush Tip");
+		tipShapeEditor.renderImGui();
 		if (ImGui.collapsingHeader("Brush Dynamics")) dynamicList.renderList(shapeDynamics, BRUSH_TIP_TARGETS, true);
 		ImGui.popID();
 
@@ -84,6 +87,17 @@ public class BrushPresetEditor implements BrushPreset {
 		ImGui.popID();
 
 		dynamicList.renderWindows();
+	}
+
+	private class TipShapeEditorImpl extends TipShapeEditor {
+		public TipShapeEditorImpl(TipShape shape) {
+			super(shape);
+		}
+
+		@Override
+		protected void onShapeChanged(TipShape oldShape, TipShape newShape) {
+			shape = newShape;
+		}
 	}
 
 	private class PaletteEditorImpl extends PaletteEditor {
