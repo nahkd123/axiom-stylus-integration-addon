@@ -14,6 +14,9 @@ import it.unimi.dsi.fastutil.floats.FloatUnaryOperator;
  * </p>
  */
 public interface DynamicFunction extends FloatUnaryOperator {
+	// TODO dynamic function should be immutable
+	DynamicFunction makeCopy();
+
 	default void renderImGui() {}
 
 	static Codec<DynamicFunction> CODEC = Codec.STRING.dispatch(
@@ -47,7 +50,7 @@ public interface DynamicFunction extends FloatUnaryOperator {
 			this.vShift[0] = vShift;
 			this.hShift[0] = hShift;
 			this.gain[0] = gain;
-			this.vShift[0] = vShift;
+			this.exponent[0] = exponent;
 			this.flip = flip;
 		}
 
@@ -84,6 +87,11 @@ public interface DynamicFunction extends FloatUnaryOperator {
 		public void setExponent(float exponent) { this.exponent[0] = exponent; }
 
 		public void setFlip(boolean flip) { this.flip = flip; }
+
+		@Override
+		public DynamicFunction makeCopy() {
+			return new Parametric(vShift[0], hShift[0], gain[0], exponent[0], flip);
+		}
 
 		@Override
 		public void renderImGui() {

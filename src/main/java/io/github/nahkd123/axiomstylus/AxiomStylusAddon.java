@@ -1,5 +1,6 @@
 package io.github.nahkd123.axiomstylus;
 
+import java.nio.file.Path;
 import java.util.ServiceLoader;
 
 import org.slf4j.Logger;
@@ -10,9 +11,10 @@ import com.moulberry.axiomclientapi.service.ToolPatherProvider;
 import com.moulberry.axiomclientapi.service.ToolRegistryService;
 import com.moulberry.axiomclientapi.service.ToolService;
 
-import io.github.nahkd123.axiomstylus.tool.PresetBrushTool;
 import io.github.nahkd123.axiomstylus.tool.FreehandTool;
+import io.github.nahkd123.axiomstylus.tool.PresetBrushTool;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class AxiomStylusAddon implements ModInitializer {
 	public static final String MOD_ID = "axiom-stylus-integration-addon";
@@ -41,6 +43,8 @@ public class AxiomStylusAddon implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		TOOL_REGISTRY.register(new FreehandTool());
-		TOOL_REGISTRY.register(new PresetBrushTool());
+		TOOL_REGISTRY.register(new PresetBrushTool(getConfigDir().resolve("presets", "brushes")));
 	}
+
+	public Path getConfigDir() { return FabricLoader.getInstance().getConfigDir().resolve(MOD_ID); }
 }

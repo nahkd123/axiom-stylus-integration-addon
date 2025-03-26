@@ -8,6 +8,8 @@ import io.github.nahkd123.axiomstylus.palette.Palette;
 import io.github.nahkd123.axiomstylus.preset.dynamic.BrushDynamic;
 
 public interface BrushPreset {
+	String name();
+
 	TipShape shape();
 
 	BrushSpacing spacing();

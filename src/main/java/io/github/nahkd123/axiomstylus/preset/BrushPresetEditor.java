@@ -6,6 +6,7 @@ import java.util.List;
 import org.joml.Matrix4f;
 
 import imgui.ImGui;
+import imgui.type.ImString;
 import io.github.nahkd123.axiomstylus.palette.Palette;
 import io.github.nahkd123.axiomstylus.palette.PaletteEditor;
 import io.github.nahkd123.axiomstylus.palette.SpecialPalette;
@@ -20,6 +21,7 @@ import io.github.nahkd123.axiomstylus.utils.AsImGui;
 public class BrushPresetEditor implements BrushPreset {
 	private static final List<DynamicTarget<Matrix4f>> BRUSH_TIP_TARGETS = List.of(Matrix4fDynamicTarget.values());
 
+	private ImString name = new ImString("Brush", 256);
 	private TipShape shape = TipShape.sphere(5d);
 	private BrushSpacing spacing = BrushSpacing.even(0.5);
 	private Palette palette = SpecialPalette.CURRENT_BLOCK;
@@ -37,6 +39,11 @@ public class BrushPresetEditor implements BrushPreset {
 			Matrix4fDynamicTarget.SCALE));
 		// @formatter:on
 		resetChildEditors();
+	}
+
+	@Override
+	public String name() {
+		return name.get();
 	}
 
 	@Override
@@ -60,11 +67,12 @@ public class BrushPresetEditor implements BrushPreset {
 	}
 
 	public void loadPreset(BrushPreset preset) {
+		name.set(preset.name());
 		shape = preset.shape();
 		spacing = preset.spacing();
 		palette = preset.palette();
 		shapeDynamics = new ArrayList<>();
-		shapeDynamics.addAll(preset.shapeDynamics());
+		shapeDynamics.addAll(preset.shapeDynamics().stream().map(BrushDynamic::makeCopy).toList());
 		resetChildEditors();
 	}
 
@@ -75,6 +83,11 @@ public class BrushPresetEditor implements BrushPreset {
 	}
 
 	public void renderImGui() {
+		ImGui.pushID("General");
+		AsImGui.separatorText("General");
+		ImGui.inputText("Name", name);
+		ImGui.popID();
+
 		ImGui.pushID("Brush Tip");
 		AsImGui.separatorText("Brush Tip");
 		tipShapeEditor.renderImGui();

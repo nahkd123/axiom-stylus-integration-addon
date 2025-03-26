@@ -12,6 +12,11 @@ public record BrushDynamic<T>(DynamicSource source, DynamicFunction function, Dy
 			.apply(instance, BrushDynamic::new));
 	}
 
+	// TODO make it fully immutable
+	public BrushDynamic<T> makeCopy() {
+		return new BrushDynamic<>(source, function.makeCopy(), destination);
+	}
+
 	@Override
 	public final String toString() {
 		return "%s -> %s".formatted(source.getName(), destination.getName());
