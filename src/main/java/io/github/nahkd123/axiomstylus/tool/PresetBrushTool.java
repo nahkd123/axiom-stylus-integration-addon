@@ -23,6 +23,7 @@ import io.github.nahkd123.axiomstylus.preset.TipShape;
 import io.github.nahkd123.axiomstylus.preset.dynamic.DynamicSource;
 import io.github.nahkd123.axiomstylus.utils.AsImGui;
 import io.github.nahkd123.axiomstylus.utils.Box3d;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
@@ -30,6 +31,7 @@ import net.minecraft.util.math.Vec3d;
 public class PresetBrushTool extends CustomStylusTool {
 	private ImBoolean settingsBrowserToggle = new ImBoolean(false);
 	private ImBoolean presetEditorToggle = new ImBoolean(false);
+	private ImBoolean exportPresetToggle = new ImBoolean(false);
 	private BrushPresetEditor presetEditor = new BrushPresetEditor();
 
 	private BlockRegion commit = null;
@@ -102,7 +104,9 @@ public class PresetBrushTool extends CustomStylusTool {
 					if (!shape.test(
 						originInTip.x, originInTip.y, originInTip.z,
 						localInTip.x, localInTip.y, localInTip.z)) continue;
-					commit.addBlockIfNotPresent(wx, wy, wz, palette.get(0));
+					BlockState block = palette.get(0); // TODO select from palette function
+					commit.addBlockIfNotPresent(wx, wy, wz, block);
+					if (block.isAir()) removals.add(wx, wy, wz);
 					// TODO support brush operation - add and subtract
 				}
 			}
@@ -130,7 +134,7 @@ public class PresetBrushTool extends CustomStylusTool {
 		ImGui.button("Import preset");
 		ImGui.endDisabled();
 		ImGui.sameLine();
-		if (ImGui.button("Export preset")) ImGui.openPopup("Stylus - Export Brush Preset");
+		if (ImGui.button("Export preset")) exportPresetToggle.set(true);
 
 		if (presetEditorToggle.get()) {
 			ImGui.setNextWindowPos(
@@ -138,25 +142,27 @@ public class PresetBrushTool extends CustomStylusTool {
 				ImGui.getWindowPosY(),
 				ImGuiCond.FirstUseEver, 0f, 0f);
 			ImGui.setNextWindowSize(400f, 800f, ImGuiCond.FirstUseEver);
-			if (ImGui.begin("Stylus - Brush Preset")) presetEditor.renderImGui();
+			if (ImGui.begin("Stylus - Brush Preset", presetEditorToggle)) presetEditor.renderImGui();
 			ImGui.end();
 		}
 
-		if (ImGui.beginPopupModal("Stylus - Export Brush Preset")) {
-			ImGui.text("You are exporting the brush preset");
+		if (exportPresetToggle.get()) {
+			if (ImGui.begin("Stylus - Export Brush Preset", exportPresetToggle)) {
+				ImGui.text("You are exporting the brush preset");
 
-			if (ImGui.button("Copy brush preset to clipboard")) {
-				SavedBrushPreset saved = SavedBrushPreset.savedPresetOf(presetEditor);
-				var result = SavedBrushPreset.CODEC.codec().encodeStart(JsonOps.INSTANCE, saved);
-				var json = result.resultOrPartial().orElse(null);
-				if (json != null) ImGui.setClipboardText(json.toString());
-				else AxiomStylusAddon.LOGGER.error(result.error()
-					.map(DataResult.Error::message)
-					.orElse("Unable to export preset to clipboard"));
+				if (ImGui.button("Copy brush preset to clipboard")) {
+					SavedBrushPreset saved = SavedBrushPreset.savedPresetOf(presetEditor);
+					var result = SavedBrushPreset.CODEC.codec().encodeStart(JsonOps.INSTANCE, saved);
+					var json = result.resultOrPartial().orElse(null);
+					if (json != null) ImGui.setClipboardText(json.toString());
+					else AxiomStylusAddon.LOGGER.error(result.error()
+						.map(DataResult.Error::message)
+						.orElse("Unable to export preset to clipboard"));
+				}
+
+				ImGui.button("Save brush preset as file");
 			}
-
-			ImGui.button("Save brush preset as file");
-			ImGui.endPopup();
+			ImGui.end();
 		}
 	}
 }
