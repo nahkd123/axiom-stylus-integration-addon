@@ -4,7 +4,7 @@ import imgui.ImGui;
 import imgui.type.ImInt;
 
 public abstract class TipShapeEditor {
-	private static final String[] LABELS = { "Sphere" };
+	private static final String[] LABELS = { "Cube", "Sphere" };
 	private TipShape oldShape;
 	private ImInt index = new ImInt();
 	private float[] radius = { 1f, 1f, 1f };
@@ -15,8 +15,14 @@ public abstract class TipShapeEditor {
 
 	public void setCurrent(TipShape shape) {
 		switch (oldShape = shape) {
-		case TipShape.Sphere(double rx, double ry, double rz):
+		case TipShape.Cube(double rx, double ry, double rz):
 			index.set(0);
+			radius[0] = (float) rx;
+			radius[1] = (float) ry;
+			radius[2] = (float) rz;
+			break;
+		case TipShape.Sphere(double rx, double ry, double rz):
+			index.set(1);
 			radius[0] = (float) rx;
 			radius[1] = (float) ry;
 			radius[2] = (float) rz;
@@ -28,7 +34,8 @@ public abstract class TipShapeEditor {
 
 	public TipShape getCurrent() {
 		return switch (index.get()) {
-		case 0 -> TipShape.sphere(radius[0], radius[1], radius[2]);
+		case 0 -> TipShape.cube(radius[0], radius[1], radius[2]);
+		case 1 -> TipShape.sphere(radius[0], radius[1], radius[2]);
 		default -> throw new IllegalArgumentException("Unexpected value: " + index.get());
 		};
 	}
@@ -40,6 +47,7 @@ public abstract class TipShapeEditor {
 
 		switch (index.get()) {
 		case 0:
+		case 1:
 			if (ImGui.sliderFloat3("Radius", radius, 0f, 10f)) shapeChanged();
 			break;
 		default:

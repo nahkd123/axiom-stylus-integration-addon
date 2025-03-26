@@ -101,6 +101,8 @@ public class PresetBrushTool extends CustomStylusTool {
 		presetEditor.shapeDynamics().forEach(d -> {
 			float value = d.function().apply(switch (d.source()) {
 			case DynamicSource.NORMAL_PRESSURE -> input.pressure();
+			case TILT_X -> input.tiltX();
+			case TILT_Y -> input.tiltY();
 			default -> 0f;
 			});
 			d.destination().addValue(mat4, value);

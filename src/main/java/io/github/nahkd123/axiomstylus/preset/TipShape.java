@@ -38,6 +38,14 @@ public interface TipShape {
 	 */
 	boolean test(double ox, double oy, double oz, double lx, double ly, double lz);
 
+	static Cube cube(double radiusX, double radiusY, double radiusZ) {
+		return new Cube(radiusX, radiusY, radiusZ);
+	}
+
+	static Cube cube(double radius) {
+		return new Cube(radius, radius, radius);
+	}
+
 	static Sphere sphere(double radiusX, double radiusY, double radiusZ) {
 		return new Sphere(radiusX, radiusY, radiusZ);
 	}
@@ -56,6 +64,37 @@ public interface TipShape {
 		case "sphere" -> Sphere.CODEC.fieldOf("radius");
 		default -> throw new IllegalArgumentException("Unexpected value: " + key);
 		});
+
+	record Cube(double radiusX, double radiusY, double radiusZ) implements TipShape {
+		private List<Double> asCodecList() {
+			return radiusX == radiusY && radiusX == radiusZ
+				? List.of(radiusX)
+				: List.of(radiusX, radiusY, radiusZ);
+		}
+
+		public static final Codec<Cube> CODEC = Codec.either(
+			Codec.DOUBLE.xmap(r -> new Cube(r, r, r), s -> s.radiusX),
+			Codec.DOUBLE.listOf(1, 3).xmap(
+				list -> list.size() == 1
+					? new Cube(list.get(0), list.get(0), list.get(0))
+					: new Cube(list.get(0), list.get(1), list.get(2)),
+				Cube::asCodecList))
+			.xmap(
+				either -> either.left().or(either::right).get(),
+				sphere -> sphere.radiusX == sphere.radiusY && sphere.radiusX == sphere.radiusZ
+					? Either.left(sphere)
+					: Either.right(sphere));
+
+		@Override
+		public Box3d getBoundingBox() { return Box3d.radius(radiusZ, radiusY, radiusX); }
+
+		@Override
+		public boolean test(double ox, double oy, double oz, double lx, double ly, double lz) {
+			return lx >= -radiusX && lx <= radiusX
+				&& ly >= -radiusY && ly <= radiusY
+				&& lz >= -radiusZ && lz <= radiusZ;
+		}
+	}
 
 	record Sphere(double radiusX, double radiusY, double radiusZ) implements TipShape {
 		private List<Double> asCodecList() {
