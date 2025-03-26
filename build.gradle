@@ -12,6 +12,15 @@ base {
 
 repositories {
 	maven { url = 'https://jitpack.io' }
+
+	exclusiveContent {
+		forRepository {
+			maven { url = 'https://api.modrinth.com/maven' }
+		}
+		filter {
+			includeGroup 'maven.modrinth'
+		}
+	}
 }
 
 dependencies {
@@ -22,7 +31,8 @@ dependencies {
 
 	// Mod dependencies
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	modCompileOnly "com.github.moulberry:AxiomClientAPI:1.0.5.3"
+	modCompileOnly 'com.github.moulberry:AxiomClientAPI:1.0.5.3'
+	modCompileOnly 'maven.modrinth:axiom:Ww9uleCZ'
 
 	// Windows platform (Windows Tablet PC)
 	// Jitpack not resolving io.github.nahkd123 for me... oh well...

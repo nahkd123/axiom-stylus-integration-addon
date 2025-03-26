@@ -23,16 +23,20 @@ public interface TipShape {
 
 	/**
 	 * <p>
-	 * Test whether the tip shape occupies a certain position. This always assume
-	 * the origin of brush tip is located at {@code (0; 0; 0)}.
+	 * Test whether the tip shape occupies a certain position. Origin position is
+	 * absolute (in world space), while local position is relative (in brush tip's
+	 * space). Origin and local are for static textures, such as brick or noise.
 	 * </p>
 	 * 
-	 * @param x The X position in shape volume.
-	 * @param y The Y position in shape volume.
-	 * @param z The Z position in shape volume.
+	 * @param ox The origin X position of brush tip in world space.
+	 * @param oy The origin X position of brush tip in world space.
+	 * @param oz The origin X position of brush tip in world space.
+	 * @param lx The local X position in shape volume.
+	 * @param ly The local Y position in shape volume.
+	 * @param lz The local Z position in shape volume.
 	 * @return Whether this tip shape occupies the specific coordinates.
 	 */
-	boolean test(double x, double y, double z);
+	boolean test(double ox, double oy, double oz, double lx, double ly, double lz);
 
 	static Sphere sphere(double radiusX, double radiusY, double radiusZ) {
 		return new Sphere(radiusX, radiusY, radiusZ);
@@ -77,9 +81,9 @@ public interface TipShape {
 		public Box3d getBoundingBox() { return Box3d.radius(radiusX, radiusY, radiusZ); }
 
 		@Override
-		public boolean test(double x, double y, double z) {
-			double sx = x / radiusX, sy = y / radiusY, sz = z / radiusZ;
-			return sx * sx + sy * sy + sz * sz <= 1d;
+		public boolean test(double ox, double oy, double oz, double lx, double ly, double lz) {
+			double sx = lx / radiusX, sy = ly / radiusY, sz = lz / radiusZ;
+			return sx * sx + sy * sy + sz * sz < 1d;
 		}
 	}
 }

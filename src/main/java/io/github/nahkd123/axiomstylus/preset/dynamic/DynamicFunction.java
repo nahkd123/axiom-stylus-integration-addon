@@ -93,14 +93,14 @@ public interface DynamicFunction extends FloatUnaryOperator {
 				|| gain[0] != gain[1]
 				|| exponent[0] != exponent[1];
 
-			ImGui.sliderFloat("Shift X", hShift, -1f, 1f, "%.02f");
-			ImGui.sliderFloat("Shift Y", vShift, -1f, 1f, "%.02f");
-			ImGui.sliderFloat("Gain", gain, 0.01f, 10f, "%.02f", ImGuiSliderFlags.Logarithmic);
-			ImGui.sliderFloat("Exponent", exponent, 0.01f, 10f, "%.02f", ImGuiSliderFlags.Logarithmic);
 			if (ImGui.checkbox("Flip graph", flip)) {
 				flip = !flip;
 				recalcGraph = true;
 			}
+			ImGui.sliderFloat("Shift X", hShift, -1f, 1f, "%.02f");
+			ImGui.sliderFloat("Shift Y", vShift, -1f, 1f, "%.02f");
+			ImGui.sliderFloat("Gain", gain, 0.01f, 10f, "%.02f", ImGuiSliderFlags.Logarithmic);
+			ImGui.sliderFloat("Exponent", exponent, 0.01f, 10f, "%.02f", ImGuiSliderFlags.Logarithmic);
 
 			if (recalcGraph) {
 				for (int i = 0; i < imguiPlot.length; i++) {
