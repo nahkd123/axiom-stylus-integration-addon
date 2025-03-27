@@ -12,6 +12,12 @@ public record ListPalette(List<BlockState> states) implements Palette {
 		.xmap(ListPalette::new, ListPalette::states);
 
 	@Override
+	public String getName() { return "Sequence"; }
+
+	@Override
+	public String getDescription() { return "An ordered sequence of blocks"; }
+
+	@Override
 	public int size() {
 		return states.size();
 	}

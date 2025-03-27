@@ -29,7 +29,10 @@ import io.github.nahkd123.axiomstylus.AxiomStylusAddon;
 import io.github.nahkd123.axiomstylus.brush.BrushPoint;
 import io.github.nahkd123.axiomstylus.brush.BrushStroke;
 import io.github.nahkd123.axiomstylus.palette.Palette;
-import io.github.nahkd123.axiomstylus.preset.BrushPresetEditor;
+import io.github.nahkd123.axiomstylus.palette.SpecialPalette;
+import io.github.nahkd123.axiomstylus.preset.BrushPreset;
+import io.github.nahkd123.axiomstylus.preset.BrushPresetConfigurator;
+import io.github.nahkd123.axiomstylus.preset.BrushSpacing;
 import io.github.nahkd123.axiomstylus.preset.SavedBrushPreset;
 import io.github.nahkd123.axiomstylus.preset.TipShape;
 import io.github.nahkd123.axiomstylus.utils.AsImGui;
@@ -45,11 +48,20 @@ public class PresetBrushTool extends CustomStylusTool {
 	private ImBoolean settingsBrowserToggle = new ImBoolean(false);
 	private ImBoolean presetEditorToggle = new ImBoolean(false);
 	private ImBoolean exportPresetToggle = new ImBoolean(false);
-	private BrushPresetEditor presetEditor = new BrushPresetEditor();
 	private ImInt savedPresetIndex = new ImInt(0);
 	private List<SavedBrushPreset> savedPresets = new ArrayList<>();
 	private String[] savedPresetLabels = new String[0];
 	private String[] noSavedPresets = { "<No saved presets>" };
+
+	// @formatter:off
+	private BrushPreset preset = new SavedBrushPreset(
+		"Brush",
+		new TipShape.Sphere(5, 5, 5),
+		BrushSpacing.even(0.5),
+		SpecialPalette.CURRENT_BLOCK,
+		List.of());
+	// @formatter:on
+	private BrushPresetConfigurator presetConfig = new BrushPresetConfigurator(preset);
 
 	private BlockRegion commit = null;
 	private BooleanRegion removals = AxiomStylusAddon.REGION.createBoolean();
@@ -87,13 +99,13 @@ public class PresetBrushTool extends CustomStylusTool {
 
 	@Override
 	protected void onBrushInput(BrushStroke stroke, BrushPoint prev, BrushPoint next) {
-		presetEditor.spacing().interpolate(prevPoint, next, generated -> onDabInput(stroke, generated));
+		preset.spacing().interpolate(prevPoint, next, generated -> onDabInput(stroke, generated));
 	}
 
 	private void onDabInput(BrushStroke stroke, BrushPoint point) {
-		Palette palette = presetEditor.palette();
+		Palette palette = preset.palette();
 		Matrix4f mat4 = new Matrix4f();
-		presetEditor.shapeDynamics().forEach(d -> {
+		preset.shapeDynamics().forEach(d -> {
 			float value = d.source().calculate(stroke, prevPoint, point);
 			System.out.println("%f -> %f".formatted(value, d.function().apply(value)));
 			d.destination().addValue(mat4, d.function().apply(value));
@@ -101,7 +113,7 @@ public class PresetBrushTool extends CustomStylusTool {
 		prevPoint = point;
 
 		Matrix4f mat4Inv = mat4.invert(new Matrix4f());
-		TipShape shape = presetEditor.shape();
+		TipShape shape = preset.shape();
 		Box3d bb = shape.getBoundingBox().tranformVerticesAndEnclose(new Matrix4d(mat4), 1d);
 		Vector3f originInTip = mat4Inv.transformProject(point.position().toVector3f());
 
@@ -145,7 +157,7 @@ public class PresetBrushTool extends CustomStylusTool {
 		if (ImGui.button("- Remove")) removeSavedPreset(savedPresetIndex.get());
 		ImGui.endDisabled();
 		ImGui.sameLine();
-		if (ImGui.button("+ Add")) addSavedPreset(SavedBrushPreset.savedPresetOf(presetEditor));
+		if (ImGui.button("+ Add")) addSavedPreset(SavedBrushPreset.savedPresetOf(preset));
 		ImGui.sameLine();
 		if (ImGui.button("Refresh")) refreshPresets();
 
@@ -162,7 +174,9 @@ public class PresetBrushTool extends CustomStylusTool {
 				ImGui.getWindowPosY(),
 				ImGuiCond.FirstUseEver, 0f, 0f);
 			ImGui.setNextWindowSize(400f, 800f, ImGuiCond.FirstUseEver);
-			if (ImGui.begin("Stylus - Brush Preset", presetEditorToggle)) presetEditor.renderImGui();
+			if (ImGui.begin("Stylus - Brush Preset", presetEditorToggle)) {
+				presetConfig.renderImGui(preset -> this.preset = preset);
+			}
 			ImGui.end();
 		}
 
@@ -171,7 +185,7 @@ public class PresetBrushTool extends CustomStylusTool {
 				ImGui.text("You are exporting the brush preset");
 
 				if (ImGui.button("Copy brush preset to clipboard")) {
-					SavedBrushPreset saved = SavedBrushPreset.savedPresetOf(presetEditor);
+					SavedBrushPreset saved = SavedBrushPreset.savedPresetOf(preset);
 					var result = SavedBrushPreset.CODEC.codec().encodeStart(JsonOps.INSTANCE, saved);
 					var json = result.resultOrPartial().orElse(null);
 					if (json != null) ImGui.setClipboardText(json.toString());
@@ -243,7 +257,7 @@ public class PresetBrushTool extends CustomStylusTool {
 	}
 
 	public void selectSavedPreset(int index) {
-		presetEditor.loadPreset(savedPresets.get(index));
+		presetConfig.loadPreset(savedPresets.get(index));
 		savedPresetIndex.set(index);
 	}
 

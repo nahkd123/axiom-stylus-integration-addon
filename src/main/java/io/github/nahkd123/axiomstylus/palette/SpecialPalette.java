@@ -13,6 +13,12 @@ public enum SpecialPalette implements Palette {
 	 */
 	CURRENT_BLOCK {
 		@Override
+		public String getName() { return "Current block"; }
+
+		@Override
+		public String getDescription() { return "Use currently selected block as palette"; }
+
+		@Override
 		public int size() {
 			return 1;
 		}
