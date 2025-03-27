@@ -57,10 +57,12 @@ public interface TipShape {
 	static Codec<TipShape> CODEC = Codec.STRING.dispatch(
 		"shape",
 		shape -> switch (shape) {
+		case Cube _ -> "cube";
 		case Sphere _ -> "sphere";
 		default -> throw new IllegalArgumentException("Unexpected value: " + shape);
 		},
 		key -> switch (key) {
+		case "cube" -> Cube.CODEC.fieldOf("radius");
 		case "sphere" -> Sphere.CODEC.fieldOf("radius");
 		default -> throw new IllegalArgumentException("Unexpected value: " + key);
 		});

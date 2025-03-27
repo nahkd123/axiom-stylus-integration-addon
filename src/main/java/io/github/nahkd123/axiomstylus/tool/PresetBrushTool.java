@@ -26,7 +26,8 @@ import imgui.flag.ImGuiCond;
 import imgui.type.ImBoolean;
 import imgui.type.ImInt;
 import io.github.nahkd123.axiomstylus.AxiomStylusAddon;
-import io.github.nahkd123.axiomstylus.input.InputReport;
+import io.github.nahkd123.axiomstylus.brush.BrushPoint;
+import io.github.nahkd123.axiomstylus.brush.BrushStroke;
 import io.github.nahkd123.axiomstylus.palette.Palette;
 import io.github.nahkd123.axiomstylus.preset.BrushPresetEditor;
 import io.github.nahkd123.axiomstylus.preset.SavedBrushPreset;
@@ -52,9 +53,7 @@ public class PresetBrushTool extends CustomStylusTool {
 
 	private BlockRegion commit = null;
 	private BooleanRegion removals = AxiomStylusAddon.REGION.createBoolean();
-	private Vec3d prevTipPosition = null;
-	private InputReport prevInput = null;
-	private double jitterStroke = 0d;
+	private BrushPoint prevPoint;
 
 	public PresetBrushTool(Path presetDir) {
 		this.presetDir = presetDir;
@@ -71,9 +70,7 @@ public class PresetBrushTool extends CustomStylusTool {
 		super.reset();
 		commit = AxiomStylusAddon.REGION.createBlock();
 		removals.clear();
-		prevTipPosition = null;
-		prevInput = null;
-		jitterStroke = Math.random();
+		prevPoint = null;
 	}
 
 	@Override
@@ -84,38 +81,29 @@ public class PresetBrushTool extends CustomStylusTool {
 	}
 
 	@Override
-	protected void onBrushBegin() {
+	protected void onBrushBegin(BrushStroke stroke) {
 		reset();
 	}
 
 	@Override
-	protected void onBrushInput(Vec3d tipPosition, InputReport input) {
-		presetEditor.spacing().interpolate(prevTipPosition, prevInput, tipPosition, input, this::onDabInput);
+	protected void onBrushInput(BrushStroke stroke, BrushPoint prev, BrushPoint next) {
+		presetEditor.spacing().interpolate(prevPoint, next, generated -> onDabInput(stroke, generated));
 	}
 
-	private void onDabInput(Vec3d tipPosition, InputReport input) {
-		prevTipPosition = tipPosition;
-		prevInput = input;
-
+	private void onDabInput(BrushStroke stroke, BrushPoint point) {
 		Palette palette = presetEditor.palette();
 		Matrix4f mat4 = new Matrix4f();
 		presetEditor.shapeDynamics().forEach(d -> {
-			float value = d.function().apply(switch (d.source()) {
-			case CONSTANT -> 1f;
-			case NORMAL_PRESSURE -> input.pressure();
-			case TILT_X -> input.tiltX();
-			case TILT_Y -> input.tiltY();
-			case JITTER_STORKE -> (float) jitterStroke;
-			case JITTER_DAB -> (float) Math.random();
-			default -> 0f;
-			});
-			d.destination().addValue(mat4, value);
+			float value = d.source().calculate(stroke, prevPoint, point);
+			System.out.println("%f -> %f".formatted(value, d.function().apply(value)));
+			d.destination().addValue(mat4, d.function().apply(value));
 		});
+		prevPoint = point;
 
 		Matrix4f mat4Inv = mat4.invert(new Matrix4f());
 		TipShape shape = presetEditor.shape();
 		Box3d bb = shape.getBoundingBox().tranformVerticesAndEnclose(new Matrix4d(mat4), 1d);
-		Vector3f originInTip = mat4Inv.transformProject(tipPosition.toVector3f());
+		Vector3f originInTip = mat4Inv.transformProject(point.position().toVector3f());
 
 		for (int y = -1; y <= bb.sizeY() + 0.5; y++) {
 			for (int z = -1; z <= bb.sizeZ() + 0.5; z++) {
@@ -126,9 +114,9 @@ public class PresetBrushTool extends CustomStylusTool {
 					Vector4f localInTip = mat4Inv.transform(
 						(float) lx, (float) ly, (float) lz, 1f,
 						new Vector4f());
-					int wx = (int) (tipPosition.x + lx);
-					int wy = (int) (tipPosition.y + ly);
-					int wz = (int) (tipPosition.z + lz);
+					int wx = (int) (point.position().x + lx);
+					int wy = (int) (point.position().y + ly);
+					int wz = (int) (point.position().z + lz);
 					if (!shape.test(
 						originInTip.x, originInTip.y, originInTip.z,
 						localInTip.x, localInTip.y, localInTip.z)) continue;
@@ -142,7 +130,7 @@ public class PresetBrushTool extends CustomStylusTool {
 	}
 
 	@Override
-	protected void onBrushFinish() {
+	protected void onBrushFinish(BrushStroke stroke) {
 		AxiomStylusAddon.TOOL_SERVICE.pushBlockRegionChange(commit);
 		reset();
 	}

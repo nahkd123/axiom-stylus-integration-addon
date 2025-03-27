@@ -1,22 +1,22 @@
 package io.github.nahkd123.axiomstylus.preset;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 
-import io.github.nahkd123.axiomstylus.input.InputReport;
-import net.minecraft.util.math.Vec3d;
+import io.github.nahkd123.axiomstylus.brush.BrushPoint;
+import io.github.nahkd123.axiomstylus.brush.ImmutableBrushPoint;
 
 /**
  * <p>
- * Represent brush dab spacing mode.
+ * Represent brush point spacing mode.
  * </p>
  */
 public interface BrushSpacing {
-	void interpolate(@Nullable Vec3d prevTipPos, @Nullable InputReport prevInput, Vec3d nextTipPos, InputReport nextInput, BiConsumer<Vec3d, InputReport> consumer);
+	void interpolate(@Nullable BrushPoint prev, BrushPoint next, Consumer<BrushPoint> consumer);
 
 	/**
 	 * <p>
@@ -30,7 +30,8 @@ public interface BrushSpacing {
 
 	/**
 	 * <p>
-	 * Interpolating between previous and next position data for brush dabs.
+	 * Evenly interpolating between previous and next position data for brush
+	 * points.
 	 * </p>
 	 */
 	static Even even(double spacing) {
@@ -53,25 +54,24 @@ public interface BrushSpacing {
 		EXACT;
 
 		@Override
-		public void interpolate(@Nullable Vec3d prevTipPos, @Nullable InputReport prevInput, Vec3d nextTipPos, InputReport nextInput, BiConsumer<Vec3d, InputReport> consumer) {
-			consumer.accept(nextTipPos, nextInput);
+		public void interpolate(@Nullable BrushPoint prev, BrushPoint next, Consumer<BrushPoint> consumer) {
+			consumer.accept(next);
 		}
 	}
 
 	record Even(double spacing) implements BrushSpacing {
 		@Override
-		public void interpolate(@Nullable Vec3d prevTipPos, @Nullable InputReport prevInput, Vec3d nextTipPos, InputReport nextInput, BiConsumer<Vec3d, InputReport> consumer) {
-			if (prevTipPos != null || prevInput != null) {
-				double distance = nextTipPos.distanceTo(prevTipPos);
+		public void interpolate(@Nullable BrushPoint prev, BrushPoint next, Consumer<BrushPoint> consumer) {
+			if (prev != null) {
+				double distance = prev.position().distanceTo(next.position());
 
 				for (double d = spacing; d <= distance + 1e-6; d += spacing) {
 					double progress = d / distance;
-					Vec3d lerpTipPos = prevTipPos.lerp(nextTipPos, progress);
-					InputReport lerpInput = InputReport.lerp(prevInput, nextInput, (float) progress);
-					consumer.accept(lerpTipPos, lerpInput);
+					ImmutableBrushPoint intermediate = ImmutableBrushPoint.lerp(prev, next, (float) progress);
+					consumer.accept(intermediate);
 				}
 			} else {
-				consumer.accept(nextTipPos, nextInput);
+				consumer.accept(next);
 			}
 		}
 	}

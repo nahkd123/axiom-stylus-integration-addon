@@ -11,19 +11,19 @@ public enum Matrix4fDynamicTarget implements DynamicTarget<Matrix4f> {
 			target.scale((float) value);
 		}
 	},
-	SCALE_X("Scale X", "The scaling along X axis") {
+	SCALE_X("Scale X", "Scale along X axis") {
 		@Override
 		public void addValue(Matrix4f target, double value) {
 			target.scale((float) value, 1f, 1f);
 		}
 	},
-	SCALE_Y("Scale Y", "The scaling along Y axis") {
+	SCALE_Y("Scale Y", "Scale along Y axis") {
 		@Override
 		public void addValue(Matrix4f target, double value) {
 			target.scale(1f, (float) value, 1f);
 		}
 	},
-	SCALE_Z("Scale Z", "The scaling along Z axis") {
+	SCALE_Z("Scale Z", "Scale along Z axis") {
 		@Override
 		public void addValue(Matrix4f target, double value) {
 			target.scale(1f, 1f, (float) value);
