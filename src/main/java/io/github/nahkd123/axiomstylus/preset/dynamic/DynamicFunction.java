@@ -1,11 +1,24 @@
 package io.github.nahkd123.axiomstylus.preset.dynamic;
 
+import static imgui.flag.ImGuiSliderFlags.Logarithmic;
+import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.CLASS_TO_DEFAULT;
+import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.CLASS_TO_ID;
+import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.CLASS_TO_INDICES;
+import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.ID_TO_CODEC;
+import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.INDICES_TO_CLASS;
+import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.imGuiLabels;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import imgui.ImGui;
-import imgui.flag.ImGuiSliderFlags;
+import imgui.type.ImBoolean;
+import imgui.type.ImInt;
+import io.github.nahkd123.axiomstylus.preset.PresetConfigurator;
 import it.unimi.dsi.fastutil.floats.FloatUnaryOperator;
 
 /**
@@ -14,129 +27,157 @@ import it.unimi.dsi.fastutil.floats.FloatUnaryOperator;
  * </p>
  */
 public interface DynamicFunction extends FloatUnaryOperator {
-	// TODO dynamic function should be immutable
-	DynamicFunction makeCopy();
+	default String getName() { return CLASS_TO_ID.get(this.getClass()); }
 
-	default void renderImGui() {}
+	default String getDescription() { return "A dynamic function that maps input to output"; }
 
-	static Codec<DynamicFunction> CODEC = Codec.STRING.dispatch(
+	default PresetConfigurator<? extends DynamicFunction> createConfigurator() {
+		return PresetConfigurator.empty();
+	}
+
+	static MapCodec<DynamicFunction> CODEC = Codec.STRING.dispatchMap(
 		"type",
-		func -> switch (func) {
-		case Parametric _ -> "exponent";
-		default -> throw new IllegalArgumentException("Unexpected value: " + func);
-		},
-		name -> switch (name) {
-		case "exponent" -> Parametric.CODEC;
-		default -> throw new IllegalArgumentException("Unexpected value: " + name);
-		});
+		func -> CLASS_TO_ID.get(func.getClass()),
+		ID_TO_CODEC::get);
 
-	class Parametric implements DynamicFunction {
-		public static final MapCodec<Parametric> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-			Codec.floatRange(-1f, 1f).optionalFieldOf("vShift", 0f).forGetter(Parametric::getVerticalShift),
-			Codec.floatRange(-1f, 1f).optionalFieldOf("hShift", 0f).forGetter(Parametric::getHorizontalShift),
-			Codec.floatRange(0f, 10f).optionalFieldOf("gain", 1f).forGetter(Parametric::getGain),
-			Codec.floatRange(0f, 10f).optionalFieldOf("exponent", 1f).forGetter(Parametric::getExponent),
-			Codec.BOOL.optionalFieldOf("flip", false).forGetter(Parametric::isFlip),
-			Codec.BOOL.optionalFieldOf("clampIn", true).forGetter(Parametric::isFlip),
-			Codec.BOOL.optionalFieldOf("clampOut", true).forGetter(Parametric::isFlip))
-			.apply(instance, Parametric::new));
+	@SuppressWarnings("unchecked")
+	static <T extends DynamicFunction> void registerMapCodec(String[] keys, MapCodec<T> codec, T def) {
+		if (CLASS_TO_ID.putIfAbsent(def.getClass(), keys[0]) != null)
+			throw new IllegalArgumentException("%s already registered".formatted(def.getClass()));
+		for (String key : keys) ID_TO_CODEC.put(key, codec.xmap(Function.identity(), v -> (T) v));
+		CLASS_TO_DEFAULT.put(def.getClass(), def);
 
-		private float[] vShift = { 0f, -1f };
-		private float[] hShift = { 0f, -1f };
-		private float[] gain = { 1f, -1f };
-		private float[] exponent = { 1f, -1f };
-		private boolean flip = false, clampIn = true, clampOut = true;
-		private float[] imguiPlot = new float[128];
+		String[] oldLabels = imGuiLabels;
+		imGuiLabels = new String[imGuiLabels.length + 1];
+		System.arraycopy(oldLabels, 0, imGuiLabels, 0, oldLabels.length);
+		imGuiLabels[oldLabels.length] = def.getName();
+		CLASS_TO_INDICES.put(def.getClass(), oldLabels.length);
+		INDICES_TO_CLASS.add(def.getClass());
+	}
 
-		public Parametric(float vShift, float hShift, float gain, float exponent, boolean flip, boolean clampIn, boolean clampOut) {
-			this.vShift[0] = vShift;
-			this.hShift[0] = hShift;
-			this.gain[0] = gain;
-			this.exponent[0] = exponent;
-			this.flip = flip;
-			this.clampIn = clampIn;
-			this.clampOut = clampOut;
+	static <T extends DynamicFunction> void registerValueCodec(String[] keys, Codec<T> codec, T def) {
+		registerMapCodec(keys, codec.optionalFieldOf("value", def), def);
+	}
+
+	static void initialize() {
+		registerValueCodec(new String[] { "identity" }, Codec.unit(Simple.IDENTITY), Simple.IDENTITY);
+		registerMapCodec(
+			new String[] { "parametric", "exponent" },
+			Parametric.CODEC,
+			new Parametric(0f, 0f, 1f, 1f, false, true, true));
+	}
+
+	static PresetConfigurator<DynamicFunction> createAllConfigurator(DynamicFunction function) {
+		class Configurator implements PresetConfigurator<DynamicFunction> {
+			ImInt typeIndex = new ImInt(CLASS_TO_INDICES.get(function.getClass()));
+			PresetConfigurator<? extends DynamicFunction> childConfigurator = function.createConfigurator();
+
+			@Override
+			public void renderImGui(Consumer<DynamicFunction> applyCallback) {
+				if (ImGui.combo("Type", typeIndex, imGuiLabels)) {
+					Class<?> clazz = INDICES_TO_CLASS.get(typeIndex.get());
+					DynamicFunction newFunction = CLASS_TO_DEFAULT.get(clazz);
+					childConfigurator = newFunction.createConfigurator();
+					applyCallback.accept(function);
+				}
+
+				childConfigurator.renderImGui(c -> applyCallback.accept(c));
+			}
 		}
+		return new Configurator();
+	}
 
-		public Parametric() {
-			this(0f, 0f, 1f, 1f, false, true, true);
-		}
+	enum Simple implements DynamicFunction {
+		IDENTITY;
 
 		@Override
-		public float apply(float operand) {
-			float in = clampIn ? Math.clamp(operand - hShift[0], 0f, 1f) : operand - hShift[0];
-			float v = (float) (vShift[0] + Math.pow(in, exponent[0]) * gain[0]);
+		public String getName() { return "Identity"; }
+
+		@Override
+		public String getDescription() { return "Pass value from source as-is"; }
+
+		@Override
+		public float apply(float x) {
+			return x;
+		}
+	}
+
+	record Parametric(float vShift, float hShift, float gain, float exponent, boolean flip, boolean clampIn, boolean clampOut) implements DynamicFunction {
+
+		public static final MapCodec<Parametric> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+			Codec.floatRange(-1f, 1f).optionalFieldOf("vShift", 0f).forGetter(Parametric::vShift),
+			Codec.floatRange(-1f, 1f).optionalFieldOf("hShift", 0f).forGetter(Parametric::hShift),
+			Codec.floatRange(0f, 10f).optionalFieldOf("gain", 1f).forGetter(Parametric::gain),
+			Codec.floatRange(0f, 10f).optionalFieldOf("exponent", 1f).forGetter(Parametric::exponent),
+			Codec.BOOL.optionalFieldOf("flip", false).forGetter(Parametric::flip),
+			Codec.BOOL.optionalFieldOf("clampIn", true).forGetter(Parametric::clampIn),
+			Codec.BOOL.optionalFieldOf("clampOut", true).forGetter(Parametric::clampOut))
+			.apply(instance, Parametric::new));
+
+		@Override
+		public String getName() { return "Parametric"; }
+
+		@Override
+		public String getDescription() { return "Control input with parametric curve. Useful for pen pressure."; }
+
+		public static float applyParametric(float operand, float vShift, float hShift, float gain, float exponent, boolean flip, boolean clampIn, boolean clampOut) {
+			float in = clampIn ? Math.clamp(operand - hShift, 0f, 1f) : operand - hShift;
+			float v = (float) (vShift + Math.pow(in, exponent) * gain);
 			if (Float.isNaN(v)) v = 0f;
 			float output = flip ? (1f - v) : v;
 			return clampOut ? Math.clamp(output, 0f, 1f) : output;
 		}
 
-		public float getVerticalShift() { return vShift[0]; }
-
-		public float getHorizontalShift() { return hShift[0]; }
-
-		public float getGain() { return gain[0]; }
-
-		public float getExponent() { return exponent[0]; }
-
-		public boolean isFlip() { return flip; }
-
-		public void setVerticalShift(float vShift) { this.vShift[0] = vShift; }
-
-		public void setHorizontalShift(float hShift) { this.hShift[0] = hShift; }
-
-		public void setGain(float gain) { this.gain[0] = gain; }
-
-		public void setExponent(float exponent) { this.exponent[0] = exponent; }
-
-		public void setFlip(boolean flip) { this.flip = flip; }
-
 		@Override
-		public DynamicFunction makeCopy() {
-			return new Parametric(vShift[0], hShift[0], gain[0], exponent[0], flip, clampIn, clampOut);
+		public float apply(float operand) {
+			return applyParametric(operand, vShift, hShift, gain, exponent, flip, clampIn, clampOut);
 		}
 
 		@Override
-		public void renderImGui() {
-			boolean recalcGraph = false
-				|| vShift[0] != vShift[1]
-				|| hShift[0] != hShift[1]
-				|| gain[0] != gain[1]
-				|| exponent[0] != exponent[1];
+		public PresetConfigurator<Parametric> createConfigurator() {
+			float[] vShift = { this.vShift };
+			float[] hShift = { this.hShift };
+			float[] gain = { this.gain };
+			float[] exponent = { this.exponent };
+			float[] imguiPlot = new float[128];
+			ImBoolean flip = new ImBoolean(this.flip);
+			ImBoolean clampIn = new ImBoolean(this.clampIn);
+			ImBoolean clampOut = new ImBoolean(this.clampOut);
 
-			if (ImGui.checkbox("Flip graph", flip)) {
-				flip = !flip;
-				recalcGraph = true;
-			}
-			if (ImGui.checkbox("Clamp input", clampIn)) {
-				clampIn = !clampIn;
-				recalcGraph = true;
-			}
-			if (ImGui.checkbox("Clamp output", clampOut)) {
-				clampOut = !clampOut;
-				recalcGraph = true;
+			for (int i = 0; i < imguiPlot.length; i++) {
+				float p = i / (float) (imguiPlot.length - 1);
+				imguiPlot[i] = applyParametric(p,
+					vShift[0], hShift[0], gain[0], exponent[0],
+					flip.get(), clampIn.get(), clampOut.get());
 			}
 
-			ImGui.sliderFloat("Shift X", hShift, -1f, 1f, "%.02f");
-			ImGui.sliderFloat("Shift Y", vShift, -1f, 1f, "%.02f");
-			ImGui.sliderFloat("Gain", gain, 0.01f, 10f, "%.02f", ImGuiSliderFlags.Logarithmic);
-			ImGui.sliderFloat("Exponent", exponent, 0.01f, 10f, "%.02f", ImGuiSliderFlags.Logarithmic);
+			return applyCallback -> {
+				boolean changed = false;
+				changed |= ImGui.checkbox("Flip graph", flip);
+				changed |= ImGui.checkbox("Clamp input", clampIn);
+				changed |= ImGui.checkbox("Clamp output", clampOut);
+				changed |= ImGui.sliderFloat("Shift X", hShift, -1f, 1f, "%.02f");
+				changed |= ImGui.sliderFloat("Shift Y", vShift, -1f, 1f, "%.02f");
+				changed |= ImGui.sliderFloat("Gain", gain, 0.01f, 10f, "%.02f", Logarithmic);
+				changed |= ImGui.sliderFloat("Exponent", exponent, 0.01f, 10f, "%.02f", Logarithmic);
 
-			if (recalcGraph) {
-				for (int i = 0; i < imguiPlot.length; i++) {
-					float p = i / (float) (imguiPlot.length - 1);
-					imguiPlot[i] = apply(p);
+				if (changed) {
+					for (int i = 0; i < imguiPlot.length; i++) {
+						float p = i / (float) (imguiPlot.length - 1);
+						imguiPlot[i] = applyParametric(p,
+							vShift[0], hShift[0], gain[0], exponent[0],
+							flip.get(), clampIn.get(), clampOut.get());
+					}
+
+					// @formatter:off
+					applyCallback.accept(new Parametric(vShift[0], hShift[0], gain[0], exponent[0], flip.get(), clampIn.get(), clampOut.get()));
+					// @formatter:on
 				}
 
-				vShift[1] = vShift[0];
-				hShift[1] = hShift[0];
-				gain[1] = gain[0];
-				exponent[1] = exponent[0];
-			}
-
-			ImGui.plotLines(
-				"Graph", imguiPlot, imguiPlot.length, 0, "", 0f, 1f,
-				ImGui.calcItemWidth(), ImGui.calcItemWidth());
+				ImGui.plotLines(
+					"Graph", imguiPlot, imguiPlot.length, 0, "", 0f, 1f,
+					ImGui.calcItemWidth(), ImGui.calcItemWidth());
+			};
 		}
 	}
 }

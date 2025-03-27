@@ -69,7 +69,7 @@ public class BrushDynamicListWidget {
 			ImGui.tableSetColumnIndex(0);
 			if (ImGui.selectable("+ Add new", false, ImGuiSelectableFlags.SpanAllColumns)) {
 				var source = DynamicSource.NORMAL_PRESSURE;
-				var function = new DynamicFunction.Parametric();
+				var function = DynamicFunction.Simple.IDENTITY;
 				var target = allTargets.get(0);
 				var entry = new BrushDynamic<>(source, function, target);
 				list.add(entry);

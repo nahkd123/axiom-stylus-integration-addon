@@ -14,7 +14,7 @@ public record BrushDynamic<T>(DynamicSource source, DynamicFunction function, Dy
 
 	// TODO make it fully immutable
 	public BrushDynamic<T> makeCopy() {
-		return new BrushDynamic<>(source, function.makeCopy(), destination);
+		return new BrushDynamic<>(source, function, destination);
 	}
 
 	@Override

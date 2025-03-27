@@ -35,7 +35,7 @@ public class BrushPresetEditor implements BrushPreset {
 		// @formatter:off
 		shapeDynamics.add(new BrushDynamic<>(
 			DynamicSource.NORMAL_PRESSURE,
-			new DynamicFunction.Parametric(),
+			DynamicFunction.Simple.IDENTITY,
 			Matrix4fDynamicTarget.SCALE));
 		// @formatter:on
 		resetChildEditors();

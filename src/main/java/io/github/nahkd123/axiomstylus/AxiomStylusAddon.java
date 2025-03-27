@@ -11,6 +11,7 @@ import com.moulberry.axiomclientapi.service.ToolPatherProvider;
 import com.moulberry.axiomclientapi.service.ToolRegistryService;
 import com.moulberry.axiomclientapi.service.ToolService;
 
+import io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunction;
 import io.github.nahkd123.axiomstylus.tool.FreehandTool;
 import io.github.nahkd123.axiomstylus.tool.PresetBrushTool;
 import net.fabricmc.api.ModInitializer;
@@ -38,6 +39,11 @@ public class AxiomStylusAddon implements ModInitializer {
 		TOOL_REGISTRY = ServiceLoader.load(ToolRegistryService.class)
 			.findFirst()
 			.orElseThrow(() -> new Error("Missing ToolRegistryService! Is Axiom loaded?"));
+	}
+
+	{
+		// Pre-initialize phase
+		DynamicFunction.initialize();
 	}
 
 	@Override

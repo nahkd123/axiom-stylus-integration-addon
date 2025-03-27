@@ -1,10 +1,10 @@
 package io.github.nahkd123.axiomstylus.preset.dynamic;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 import imgui.ImGui;
 import imgui.type.ImInt;
+import io.github.nahkd123.axiomstylus.preset.PresetConfigurator;
 import io.github.nahkd123.axiomstylus.utils.AsImGui;
 
 public abstract class BrushDynamicEditor<T> {
@@ -13,15 +13,13 @@ public abstract class BrushDynamicEditor<T> {
 	private DynamicTarget<T> target;
 	private BrushDynamic<T> dynamic;
 
+	// Configurators
+	private PresetConfigurator<DynamicFunction> functionConfig;
+
 	// Imgui
 	private DynamicSource[] allSources = DynamicSource.values();
 	private String[] sourceLabels;
 	private ImInt sourceIndex;
-
-	@SuppressWarnings("unchecked")
-	private Supplier<DynamicFunction>[] allFunctions = new Supplier[] { DynamicFunction.Parametric::new };
-	private String[] functionTypeLabels = { "Parametric" };
-	private ImInt functionTypeIndex;
 
 	private List<DynamicTarget<T>> allTargets = getAllTargets();
 	private String[] targetLabels;
@@ -37,10 +35,7 @@ public abstract class BrushDynamicEditor<T> {
 		for (int i = 0; i < allSources.length; i++) sourceLabels[i] = allSources[i].getName();
 		sourceIndex = new ImInt(source.ordinal());
 
-		functionTypeIndex = new ImInt(switch (function) {
-		case DynamicFunction.Parametric _ -> 0;
-		default -> throw new IllegalArgumentException("Unexpected value: " + function);
-		});
+		this.functionConfig = DynamicFunction.createAllConfigurator(function);
 
 		targetLabels = new String[allTargets.size()];
 		for (int i = 0; i < allTargets.size(); i++) targetLabels[i] = allTargets.get(i).getName();
@@ -62,11 +57,10 @@ public abstract class BrushDynamicEditor<T> {
 
 		ImGui.pushID("Function");
 		AsImGui.separatorText("Function");
-		if (ImGui.combo("Type", functionTypeIndex, functionTypeLabels)) {
-			function = allFunctions[functionTypeIndex.get()].get();
+		functionConfig.renderImGui(newFunction -> {
+			function = newFunction;
 			dataChanged();
-		}
-		if (function != null) function.renderImGui();
+		});
 		ImGui.popID();
 
 		ImGui.pushID("Target");
