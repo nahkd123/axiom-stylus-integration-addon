@@ -32,7 +32,6 @@ dependencies {
 	// Mod dependencies
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modCompileOnly 'com.github.moulberry:AxiomClientAPI:1.0.5.3'
-	modCompileOnly 'maven.modrinth:axiom:Ww9uleCZ'
 
 	// Windows platform (Windows Tablet PC)
 	// Jitpack not resolving io.github.nahkd123 for me... oh well...

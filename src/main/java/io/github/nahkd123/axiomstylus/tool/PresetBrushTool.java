@@ -258,7 +258,8 @@ public class PresetBrushTool extends CustomStylusTool {
 					String json = Files.readString(child, StandardCharsets.UTF_8);
 					var result = SavedBrushPreset.CODEC.codec().decode(JsonOps.INSTANCE, JsonParser.parseString(json));
 					var resultOrPartial = result.resultOrPartial();
-					if (resultOrPartial.isEmpty()) AxiomStylusAddon.LOGGER.warn("Failed to load {} preset", child);
+					if (resultOrPartial.isEmpty()) AxiomStylusAddon.LOGGER.warn("Failed to load {} preset: {}",
+						child, result.error().get().message());
 					SavedBrushPreset preset = resultOrPartial.get().getFirst();
 					savedPresets.add(preset);
 				}

@@ -11,6 +11,7 @@ import com.moulberry.axiomclientapi.service.ToolPatherProvider;
 import com.moulberry.axiomclientapi.service.ToolRegistryService;
 import com.moulberry.axiomclientapi.service.ToolService;
 
+import io.github.nahkd123.axiomstylus.preset.TipShape;
 import io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunction;
 import io.github.nahkd123.axiomstylus.tool.FreehandTool;
 import io.github.nahkd123.axiomstylus.tool.PresetBrushTool;
@@ -43,6 +44,7 @@ public class AxiomStylusAddon implements ModInitializer {
 
 	{
 		// Pre-initialize phase
+		TipShape.initialize();
 		DynamicFunction.initialize();
 	}
 

@@ -22,12 +22,12 @@ public class BrushPresetEditor implements BrushPreset {
 	private static final List<DynamicTarget<Matrix4f>> BRUSH_TIP_TARGETS = List.of(Matrix4fDynamicTarget.values());
 
 	private ImString name = new ImString("Brush", 256);
-	private TipShape shape = TipShape.sphere(5d);
+	private TipShape shape = new TipShape.Sphere(5, 5, 5);
 	private BrushSpacing spacing = BrushSpacing.even(0.5);
 	private Palette palette = SpecialPalette.CURRENT_BLOCK;
 	private List<BrushDynamic<Matrix4f>> shapeDynamics = new ArrayList<>();
 
-	private TipShapeEditor tipShapeEditor;
+	private PresetConfigurator<TipShape> tipShapeConfig;
 	private PaletteEditor paletteEditor;
 	private BrushDynamicListWidget dynamicList = new BrushDynamicListWidget();
 
@@ -77,7 +77,7 @@ public class BrushPresetEditor implements BrushPreset {
 	}
 
 	private void resetChildEditors() {
-		tipShapeEditor = new TipShapeEditorImpl(shape);
+		tipShapeConfig = TipShape.createAllConfigurator(shape);
 		paletteEditor = new PaletteEditorImpl(palette);
 		dynamicList.reset();
 	}
@@ -90,7 +90,7 @@ public class BrushPresetEditor implements BrushPreset {
 
 		ImGui.pushID("Brush Tip");
 		AsImGui.separatorText("Brush Tip");
-		tipShapeEditor.renderImGui();
+		tipShapeConfig.renderImGui(newShape -> { shape = newShape; });
 		if (ImGui.collapsingHeader("Brush Dynamics")) dynamicList.renderList(shapeDynamics, BRUSH_TIP_TARGETS, true);
 		ImGui.popID();
 
@@ -100,17 +100,6 @@ public class BrushPresetEditor implements BrushPreset {
 		ImGui.popID();
 
 		dynamicList.renderWindows();
-	}
-
-	private class TipShapeEditorImpl extends TipShapeEditor {
-		public TipShapeEditorImpl(TipShape shape) {
-			super(shape);
-		}
-
-		@Override
-		protected void onShapeChanged(TipShape oldShape, TipShape newShape) {
-			shape = newShape;
-		}
 	}
 
 	private class PaletteEditorImpl extends PaletteEditor {
