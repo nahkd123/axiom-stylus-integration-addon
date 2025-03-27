@@ -97,7 +97,7 @@ public class BrushDynamicListWidget {
 		}
 	}
 
-	private abstract class IndexedBrushDynamicEditor<T> extends BrushDynamicEditor<T> {
+	private abstract class IndexedBrushDynamicEditor<T> extends BrushDynamicConfigurator<T> {
 		private List<BrushDynamic<T>> list;
 		private int index;
 
@@ -107,9 +107,8 @@ public class BrushDynamicListWidget {
 			this.index = index;
 		}
 
-		@Override
-		protected void onDataChanged(BrushDynamic<T> oldData, BrushDynamic<T> newData) {
-			list.set(index, newData);
+		public void renderImGui() {
+			super.renderImGui(newDynamic -> list.set(index, newDynamic));
 		}
 	}
 }

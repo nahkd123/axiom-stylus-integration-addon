@@ -1,11 +1,10 @@
 package io.github.nahkd123.axiomstylus.preset.dynamic;
 
 import static imgui.flag.ImGuiSliderFlags.Logarithmic;
-import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.CLASS_TO_DEFAULT;
 import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.CLASS_TO_ID;
 import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.CLASS_TO_INDICES;
 import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.ID_TO_CODEC;
-import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.INDICES_TO_CLASS;
+import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.INDICES_TO_DEFAULT;
 import static io.github.nahkd123.axiomstylus.preset.dynamic.DynamicFunctionInternal.imGuiLabels;
 
 import java.util.function.Consumer;
@@ -17,7 +16,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import imgui.ImGui;
 import imgui.type.ImBoolean;
-import imgui.type.ImInt;
 import io.github.nahkd123.axiomstylus.preset.PresetConfigurator;
 import it.unimi.dsi.fastutil.floats.FloatUnaryOperator;
 
@@ -45,14 +43,13 @@ public interface DynamicFunction extends FloatUnaryOperator {
 		if (CLASS_TO_ID.putIfAbsent(def.getClass(), keys[0]) != null)
 			throw new IllegalArgumentException("%s already registered".formatted(def.getClass()));
 		for (String key : keys) ID_TO_CODEC.put(key, codec.xmap(Function.identity(), v -> (T) v));
-		CLASS_TO_DEFAULT.put(def.getClass(), def);
 
 		String[] oldLabels = imGuiLabels;
 		imGuiLabels = new String[imGuiLabels.length + 1];
 		System.arraycopy(oldLabels, 0, imGuiLabels, 0, oldLabels.length);
 		imGuiLabels[oldLabels.length] = def.getName();
 		CLASS_TO_INDICES.put(def.getClass(), oldLabels.length);
-		INDICES_TO_CLASS.add(def.getClass());
+		INDICES_TO_DEFAULT.add(def);
 	}
 
 	static <T extends DynamicFunction> void registerValueCodec(String[] keys, Codec<T> codec, T def) {
@@ -68,23 +65,33 @@ public interface DynamicFunction extends FloatUnaryOperator {
 	}
 
 	static PresetConfigurator<DynamicFunction> createAllConfigurator(DynamicFunction function) {
-		class Configurator implements PresetConfigurator<DynamicFunction> {
-			ImInt typeIndex = new ImInt(CLASS_TO_INDICES.get(function.getClass()));
-			PresetConfigurator<? extends DynamicFunction> childConfigurator = function.createConfigurator();
+		class ConfiguratorImpl implements PresetConfigurator<DynamicFunction> {
+			int typeIndex = CLASS_TO_INDICES.get(function.getClass());
+			PresetConfigurator<? extends DynamicFunction> child = function.createConfigurator();
 
 			@Override
 			public void renderImGui(Consumer<DynamicFunction> applyCallback) {
-				if (ImGui.combo("Type", typeIndex, imGuiLabels)) {
-					Class<?> clazz = INDICES_TO_CLASS.get(typeIndex.get());
-					DynamicFunction newFunction = CLASS_TO_DEFAULT.get(clazz);
-					childConfigurator = newFunction.createConfigurator();
-					applyCallback.accept(function);
+				if (ImGui.beginCombo("Type", INDICES_TO_DEFAULT.get(typeIndex).getName())) {
+					for (int i = 0; i < INDICES_TO_DEFAULT.size(); i++) {
+						DynamicFunction def = INDICES_TO_DEFAULT.get(i);
+
+						if (ImGui.selectable(def.getName())) {
+							typeIndex = i;
+							child = def.createConfigurator();
+							applyCallback.accept(def);
+						}
+
+						if (ImGui.isItemHovered()) ImGui.setTooltip(def.getDescription());
+					}
+
+					ImGui.endCombo();
 				}
 
-				childConfigurator.renderImGui(c -> applyCallback.accept(c));
+				child.renderImGui(c -> applyCallback.accept(c));
 			}
 		}
-		return new Configurator();
+
+		return new ConfiguratorImpl();
 	}
 
 	enum Simple implements DynamicFunction {

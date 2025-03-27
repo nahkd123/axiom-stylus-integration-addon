@@ -1,6 +1,11 @@
 package io.github.nahkd123.axiomstylus.preset.dynamic;
 
+import java.util.function.Consumer;
+
 import com.mojang.serialization.Codec;
+
+import imgui.ImGui;
+import io.github.nahkd123.axiomstylus.preset.PresetConfigurator;
 
 /**
  * <p>
@@ -40,4 +45,31 @@ public enum DynamicSource {
 	public Float getMin() { return min; }
 
 	public Float getMax() { return max; }
+
+	public PresetConfigurator<DynamicSource> createConfigurator(String label) {
+		class ConfiguratorImpl implements PresetConfigurator<DynamicSource> {
+			DynamicSource[] sources = values();
+			int index = ordinal();
+
+			@Override
+			public void renderImGui(Consumer<DynamicSource> applyCallback) {
+				if (ImGui.beginCombo(label, sources[index].getName())) {
+					for (int i = 0; i < sources.length; i++) {
+						DynamicSource entry = sources[i];
+
+						if (ImGui.selectable(entry.name, i == index)) {
+							index = i;
+							applyCallback.accept(entry);
+						}
+
+						if (ImGui.isItemHovered()) ImGui.setTooltip(entry.description);
+					}
+
+					ImGui.endCombo();
+				}
+			}
+		}
+
+		return new ConfiguratorImpl();
+	}
 }
